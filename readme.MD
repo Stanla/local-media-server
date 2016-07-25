@@ -1,4 +1,4 @@
-= Local Media Server =
+## Local Media Server
 
 Single file php/js script to act as a controller for a local media server.
 
