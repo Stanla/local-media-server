@@ -45,7 +45,7 @@ class Ldap {
      * @return array
      */
 	public function get_dir_list($dir) {
-		// Get Top Directory and Show on initial page render
+        // Get Top Directory and Show on initial page render
         $files = self::open_dir($dir);
         $ret_json = [];
         foreach($files as $k => $v) {
