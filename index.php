@@ -132,21 +132,36 @@ if(isset($response['api']) && $response['api'] === True && isset($response['file
 		selectItem : function(c) {
             var self = this;
             var name = c.attr('data-name');
-            var _main_content = $('.main-content');
+			window.history.pushState({name: name}, "page", '?path=' + name);
             if(c.hasClass('dir')) {
-                $.ajax({
-                    url : '/',
-                    data : {name: name, action : 'lookup_dir'},
-                    dataType: 'json',
-                    success : function(r) {
-                        self.showFiles(r);
-                    }
-                });
+                self.getPath(name);
             } else {
-                _main_content.empty();
-                _main_content.append('<video src="'+name+'" type="video/mp4" controls>');
+				self.putVideo(name)
             }
         },
+
+		putVideo : function(name) {
+			var _main_content = $('.main-content');
+			_main_content.empty();
+			_main_content.append('<video src="'+name+'" type="video/mp4" controls>');
+		},
+
+		getPath : function(path) {
+			var self = this;
+			self.current_dir = path;
+			$.ajax({
+				url : '/',
+				data : {name: path, action : 'lookup_dir'},
+				dataType: 'json',
+				success : function(r) {
+					if($.isEmptyObject(r)) {
+						self.putVideo(path);
+					} else {
+						self.showFiles(r);
+					}
+				}
+			});
+		},
 
 		showFiles : function(files) {
 			var self = this;
@@ -157,7 +172,8 @@ if(isset($response['api']) && $response['api'] === True && isset($response['file
                  			html_class='dir'                                                         
          			}                                                                                
          			var _div = $('<div class="item '+html_class+'">').attr('data-name', val['name']);
-         			_div.html(val['name']);                                                          
+         			_div.html(val['name']);
+
          			$('.main-content').append(_div);                                                 
 	 		});
 
@@ -166,8 +182,41 @@ if(isset($response['api']) && $response['api'] === True && isset($response['file
 			});
 		},
 
+		parseUrl : function() {
+			var self = this;
+			var regex = /[?&]([^=#]+)=([^&#]*)/g,
+				url = window.location.href,
+				params = {},
+				match;
+			while(match = regex.exec(url)) {
+				params[match[1]] = match[2];
+			}
+
+			if(params['path'] !== undefined) {
+				self.getPath(params['path']);
+				return true;
+			}
+
+			return false;
+		},
+
 		init : function() {
-			this.showFiles(files);
+			var self = this;
+
+			var has_path = self.parseUrl();
+			if(!has_path) {
+				self.showFiles(files);
+			}
+
+			$(window).bind('popstate', function(e) {
+				var state = e.originalEvent.state;
+				var path = 'videos/';
+				if(state != null) {
+					path = state['name'];
+				}
+
+				self.getPath(path);
+			});
 		}
 	};
 	
@@ -265,7 +314,7 @@ if(isset($response['api']) && $response['api'] === True && isset($response['file
 
                 // [B] Button pressed
 				if(self.gp.buttons[1].pressed) {
-					window.location.reload();
+					window.history.back();
 				}
 			}, 100)
 		}
